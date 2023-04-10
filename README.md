@@ -9,4 +9,4 @@ Upgrade Supports:
 
 !!!
 
-At the moment, the project is at the stage of completion, it is necessary to fix some bugs related to the components, but the pathfinding itself is already working and the waypoints buffer is filling up
+At the moment, the project is at the stage of completion, it is necessary to fix some bugs related to the components, but the pathfinding itself is already working and the waypoints buffer for each entity(Agent) is filling up
