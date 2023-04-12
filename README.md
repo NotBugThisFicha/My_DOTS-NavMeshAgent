@@ -1,7 +1,7 @@
 # My_DOTS-NavMeshAgent
  DOTS 1.0 Producive PathFinding by NavMeshQuere
  
-This project is my upgraded version(alpha) of the forging station code for path finding
+This project is my upgraded version(alpha) of the Forging Station blogger code for path finding
 
 Upgrade Supports: 
 1) Unity Version 2022.1 or higher 
