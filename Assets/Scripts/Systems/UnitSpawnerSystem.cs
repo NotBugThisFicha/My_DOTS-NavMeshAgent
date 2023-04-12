@@ -53,9 +53,10 @@ public partial struct SpawnUnitJob: IJobEntity
                         ecb.Instantiate(spawnerAspect.EntityUnit);
 
                     float3 pos = new float3(i * spawnerAspect.PaddingXZ.x, spawnerAspect.BaseOffset, j * spawnerAspect.PaddingXZ.y) + float3.zero;
-                    ecb.SetComponent(e, new LocalTransform { Position = pos, Scale = 0.5f });
+                    ecb.SetComponent(e, new LocalTransform { Position = pos, Scale = 1f });
                     ecb.AddComponent(e, new NavAgentComponent
                     {
+                        entity = e,
                         fromLocation = pos,
                         toLocation = new float3(pos.x, pos.y, pos.z + spawnerAspect.DestinationDistanceZAxis),
                         routed = false
@@ -69,6 +70,8 @@ public partial struct SpawnUnitJob: IJobEntity
                         minDistance = spawnerAspect.MinDistance,
                         offset = spawnerAspect.Offset
                     });
+                    ecb.AddComponent<NavAgent_ToBeRoutedTag>(e);
+                    ecb.SetComponentEnabled<NavAgent_ToBeRoutedTag>(e, true);
                     totalSpawned++;
                 }
             }

@@ -13,3 +13,8 @@ public struct UnitAgentComponent: IComponentData
     public bool reached;
 }
 
+public readonly partial struct UnitRoted_Tag: IComponentData
+{
+
+}
+

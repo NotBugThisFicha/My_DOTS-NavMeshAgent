@@ -8,6 +8,7 @@ using UnityEngine.Experimental.AI;
 
 [BurstCompile]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateAfter(typeof(NavAgentPreProcessSystem))]
 public partial struct NavAgentSystem : ISystem
 {
     private NavMeshWorld _navMeshWorld;
@@ -38,7 +39,7 @@ public partial struct NavAgentSystem : ISystem
         int maxiterations = _navGlobalSettings.maxIterations;
         int maxPathSize = _navGlobalSettings.maxPathSize;
 
-        var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();
+        var ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
 
         new NavAgentJob
         {
@@ -71,17 +72,22 @@ public partial struct NavAgentJob: IJobEntity
 
     public EntityCommandBuffer.ParallelWriter ecb_Parallel;
 
-    private void Execute(UnitAgentAspect unitAgentAspect, [ChunkIndexInQuery]int sortKey)
+    private void Execute(NavAgentAspect navAgentAspect, [ChunkIndexInQuery]int sortKey)
     {
         PathQueryStatus status = PathQueryStatus.Failure;
-        NavAgentComponent navComponent = unitAgentAspect.navAgentComponent.ValueRW;
-        navComponent.nml_FromLocation = quere.MapLocation(navComponent.fromLocation, extents, 0);
-        navComponent.nml_ToLocation = quere.MapLocation(navComponent.toLocation, extents, 0);
 
-        if (quere.IsValid(navComponent.nml_FromLocation) && 
-            quere.IsValid(navComponent.nml_ToLocation))
+        float3 FromLocation = navAgentAspect.FromLocation;
+        float3 ToLocation = navAgentAspect.ToLocation;
+        NavMeshLocation Nml_fromLocation = navAgentAspect.Nml_fromLocation;
+        NavMeshLocation Nml_toLocation = navAgentAspect.Nml_toLocation;
+
+        Nml_fromLocation = quere.MapLocation(FromLocation, extents, 0);
+        Nml_toLocation = quere.MapLocation(ToLocation, extents, 0);
+
+        if (quere.IsValid(Nml_fromLocation) && 
+            quere.IsValid(Nml_toLocation))
         {
-            status = quere.BeginFindPath(navComponent.nml_FromLocation, navComponent.nml_ToLocation, -1);
+            status = quere.BeginFindPath(Nml_fromLocation, Nml_toLocation, -1);
    
         }
            
@@ -103,8 +109,8 @@ public partial struct NavAgentJob: IJobEntity
             quere.GetPathResult(polys);
             status = PathUtils.FindStraightPath(
                 quere,
-                navComponent.fromLocation,
-                navComponent.toLocation,
+                FromLocation,
+                ToLocation,
                 polys,
                 polygonSize,
                 ref navMeshLocations,
@@ -116,10 +122,11 @@ public partial struct NavAgentJob: IJobEntity
             if(status == PathQueryStatus.Success)
             {
                 for(int i =0; i< straightPathCount; i++)
-                    unitAgentAspect.navBuffer.Add(new NavBuffer { wayPoint = navMeshLocations[i].position });
+                    navAgentAspect.navBuffer.Add(new NavBuffer { wayPoint = navMeshLocations[i].position });
 
-                navComponent.routed = true;
-                ecb_Parallel.RemoveComponent<NavAgent_ToBeRoutedTag>(sortKey ,unitAgentAspect.entity);
+                navAgentAspect.Routed = true;
+            
+                ecb_Parallel.SetComponentEnabled<NavAgent_ToBeRoutedTag>(sortKey,navAgentAspect.Entity, false);
             }
             navMeshLocations.Dispose();
             straightPathFlags.Dispose();

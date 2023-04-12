@@ -5,8 +5,7 @@ using Unity.Entities;
 using UnityEngine;
 
 [BurstCompile]
-[UpdateInGroup(typeof(InitializationSystemGroup))]
-[UpdateAfter(typeof(UnitSpawnerSystem))]
+[UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct NavAgentPreProcessSystem : ISystem
 {
     private NavAgentGlobalSettings _settings;
@@ -24,11 +23,12 @@ public partial struct NavAgentPreProcessSystem : ISystem
         var ecb = new EntityCommandBuffer(Allocator.Temp);
         int maxEntitiesroutedPerFrame = _settings.maxEntitiesRoutedPerFrame;
         int entitiesRoutedPerFrame = 0;
-        foreach(var unitAgentAspect in SystemAPI.Query<UnitAgentAspect>().WithNone<NavAgent_ToBeRoutedTag>())
+        foreach(var unitAgentAspect in SystemAPI.Query<UnitAgentAspect>().WithNone<UnitRoted_Tag>())
         {
-
             if(entitiesRoutedPerFrame< maxEntitiesroutedPerFrame && !unitAgentAspect.navAgentComponent.ValueRO.routed) {
-                ecb.AddComponent(unitAgentAspect.entity, new NavAgent_ToBeRoutedTag());
+
+                ecb.AddComponent<UnitRoted_Tag>(unitAgentAspect.entity);
+                ecb.SetComponentEnabled<NavAgent_ToBeRoutedTag>(unitAgentAspect.entity, true);
                 entitiesRoutedPerFrame++;
             }
         }
