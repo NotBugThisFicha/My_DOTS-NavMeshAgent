@@ -1,26 +1,35 @@
 
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.Jobs.LowLevel.Unsafe;
 using Unity.Mathematics;
-using UnityEngine;
 using UnityEngine.Experimental.AI;
+
+unsafe public struct NavMeshQuerePointer
+{
+    [NativeDisableUnsafePtrRestriction]
+    public void* Value;
+}
 
 [BurstCompile]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(NavAgentPreProcessSystem))]
-public partial struct NavAgentSystem : ISystem
+unsafe public partial struct NavAgentSystem : ISystem
 {
     private NavMeshWorld _navMeshWorld;
-    private NavMeshQuery _navMeshQuere;
     private NavAgentGlobalSettings _navGlobalSettings;
     private bool _navMeshQuereAssign;
+
+    private NativeArray<NavMeshQuerePointer> PointerArray;
+    private NativeList<NavMeshQuery> quereList;
 
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<NavAgentGlobalSettings>();
 
-        _navMeshQuereAssign= false;
+        _navMeshQuereAssign = false;
         _navMeshWorld = NavMeshWorld.GetDefaultWorld();
     }
 
@@ -31,19 +40,18 @@ public partial struct NavAgentSystem : ISystem
         if (!_navMeshQuereAssign)
         {
             _navGlobalSettings = SystemAPI.GetSingleton<NavAgentGlobalSettings>();
-            _navMeshQuere = new NavMeshQuery(_navMeshWorld, Allocator.Persistent, _navGlobalSettings.maxPathNodePoolSize);
+            ParallelizePointerQuere();
             _navMeshQuereAssign = true;
         }
 
         float3 extents = _navGlobalSettings.extents;
         int maxiterations = _navGlobalSettings.maxIterations;
         int maxPathSize = _navGlobalSettings.maxPathSize;
-
         var ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
 
         new NavAgentJob
         {
-            quere = _navMeshQuere,
+            querePointerArray = PointerArray,
             extents = extents,
             maxIterations = maxiterations,
             maxPathSize = maxPathSize,
@@ -53,24 +61,59 @@ public partial struct NavAgentSystem : ISystem
         _navMeshWorld.AddDependency(state.Dependency);
         
     }
+    [BurstCompile]
+    private void ParallelizePointerQuere()
+    {
+        var pointerArray = new NativeArray<NavMeshQuerePointer>(JobsUtility.MaxJobThreadCount, Allocator.Temp);
+        quereList = new NativeList<NavMeshQuery>(Allocator.Persistent);
+
+        for (var i = 0; i < JobsUtility.MaxJobThreadCount; ++i)
+        {
+            pointerArray[i] = new NavMeshQuerePointer
+            {
+                Value = UnsafeUtility.Malloc(
+                    UnsafeUtility.SizeOf<NavMeshQuery>(),
+                    UnsafeUtility.AlignOf<NavMeshQuery>(),
+                    Allocator.Persistent)
+            };
+
+            var quere = new NavMeshQuery(
+                _navMeshWorld,
+                Allocator.Persistent,
+                _navGlobalSettings.maxPathNodePoolSize);
+
+            quereList.Add(quere);
+
+            UnsafeUtility.CopyStructureToPtr(ref quere, pointerArray[i].Value);
+        }
+
+        PointerArray = new NativeArray<NavMeshQuerePointer>(pointerArray, Allocator.Persistent);
+        pointerArray.Dispose();
+    }
 
     public void OnDestroy(ref SystemState state)
     {
-        _navMeshQuere.Dispose();
+        foreach (var queue in quereList) queue.Dispose();
+        foreach (var pointer in PointerArray) UnsafeUtility.Free(pointer.Value, Allocator.Persistent);
+        quereList.Dispose();
+        PointerArray.Dispose();
     }
 }
 
 [BurstCompile]
-public partial struct NavAgentJob: IJobEntity
+unsafe public partial struct NavAgentJob: IJobEntity
 {
     [NativeDisableParallelForRestriction]
-    public NavMeshQuery quere;
+    public NativeArray<NavMeshQuerePointer> querePointerArray;
 
     public float3 extents;
     public int maxIterations;
     public int maxPathSize;
 
     public EntityCommandBuffer.ParallelWriter ecb_Parallel;
+
+    [NativeSetThreadIndex]
+    private int index;
 
     private void Execute(NavAgentAspect navAgentAspect, [ChunkIndexInQuery]int sortKey)
     {
@@ -80,6 +123,9 @@ public partial struct NavAgentJob: IJobEntity
         float3 ToLocation = navAgentAspect.ToLocation;
         NavMeshLocation Nml_fromLocation = navAgentAspect.Nml_fromLocation;
         NavMeshLocation Nml_toLocation = navAgentAspect.Nml_toLocation;
+
+        var navMeshQuerePoiner = querePointerArray[index];
+        UnsafeUtility.CopyPtrToStructure(navMeshQuerePoiner.Value, out NavMeshQuery quere);
 
         Nml_fromLocation = quere.MapLocation(FromLocation, extents, 0);
         Nml_toLocation = quere.MapLocation(ToLocation, extents, 0);
@@ -125,7 +171,6 @@ public partial struct NavAgentJob: IJobEntity
                     navAgentAspect.navBuffer.Add(new NavBuffer { wayPoint = navMeshLocations[i].position });
 
                 navAgentAspect.Routed = true;
-            
                 ecb_Parallel.SetComponentEnabled<NavAgent_ToBeRoutedTag>(sortKey,navAgentAspect.Entity, false);
             }
             navMeshLocations.Dispose();

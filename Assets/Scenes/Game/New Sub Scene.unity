@@ -225,9 +225,9 @@ MonoBehaviour:
   maxPathNodePoolSize: 1024
   maxIterations: 1024
   extents:
-    x: 100
+    x: 10
     y: 1
-    z: 100
+    z: 10
 --- !u!65 &693502490
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -279,8 +279,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   unitPrefab: {fileID: 7203007988332262238, guid: 575b901ea5308a44fa5fb5c94b77f972, type: 3}
-  xGridCount: 2
-  zGridCount: 2
+  xGridCount: 5
+  zGridCount: 5
   baseOffset: 0.5
   xPadding: 1.5
   zPadding: 1.5
