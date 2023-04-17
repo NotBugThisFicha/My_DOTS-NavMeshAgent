@@ -8,4 +8,4 @@ Upgrade Supports:
 2) Entities Package 1.0.0-pre65 or higher
 
 
-The project is complete version, pathfinding already working perfect.
+The project is complete version, pathfinding and movement already working perfect on multithread.
