@@ -10,5 +10,5 @@ Upgrade Supports:
 
 The project is complete version, pathfinding and movement already working perfect on multithread.
 
-[![IMAGE ALT TEXT HERE](http://img.youtube.com/vi/YOUTUBE_VIDEO_ID_HERE/0.jpg)](https://www.youtube.com/watch?v=NwEGz1hIwsw&t=2s&ab_channel=ESTETICAChannel)
+[(http://img.youtube.com/vi/YOUTUBE_VIDEO_ID_HERE/0.jpg)](https://www.youtube.com/watch?v=NwEGz1hIwsw&t=2s&ab_channel=ESTETICAChannel)
 
