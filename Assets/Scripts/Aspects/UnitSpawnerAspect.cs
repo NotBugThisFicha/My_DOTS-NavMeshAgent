@@ -6,6 +6,7 @@ using Unity.Mathematics;
 public readonly partial struct UnitSpawnerAspect : IAspect
 {
     private readonly RefRW<UnitSpawnerPropertys> _unitSpawnerPropetys;
+    private readonly RefRO<CollisionAvoidanceSettingsComponent> _collisionAvoidance;
     public readonly Entity EntityUnit => _unitSpawnerPropetys.ValueRO.entity;
     public readonly Entity Entity;
     public readonly float ElapsedTime {
@@ -26,4 +27,18 @@ public readonly partial struct UnitSpawnerAspect : IAspect
 
     public readonly float MinDistance => _unitSpawnerPropetys.ValueRO.minDistance;
 
+    public readonly int CountSpawn { 
+        get => _unitSpawnerPropetys.ValueRO.countSpawn;
+        set => _unitSpawnerPropetys.ValueRW.countSpawn = value; 
+    }
+
+    //--------CollisionAvoidance-------------
+    public readonly float CohesionBias => _collisionAvoidance.ValueRO.cohesionBias;
+    public readonly float SeparationBias => _collisionAvoidance.ValueRO.separationBias;
+
+    public readonly float AlignmentBias => _collisionAvoidance.ValueRO.alignmentBias;
+    public readonly float TargetBias => _collisionAvoidance.ValueRO.targetBias;
+
+    public readonly float PerceptionRadius => _collisionAvoidance.ValueRO.perceptionRadius;
+    public readonly int cellSize => _collisionAvoidance.ValueRO.cellSize;
 }

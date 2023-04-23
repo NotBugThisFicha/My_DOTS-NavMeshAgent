@@ -2,6 +2,7 @@
 using Unity.Mathematics;
 using UnityEngine;
 
+
 public class UnitSpawerConfigMono: MonoBehaviour
 {
     public GameObject unitPrefab;
@@ -19,6 +20,8 @@ public class UnitSpawerConfigMono: MonoBehaviour
     public int minSpeed;
     public int maxSpeed;
     public float minDistance;
+
+    public CollisionAvoidance avoidance;
 }
 
 public partial class UnitSpawnerBaker : Baker<UnitSpawerConfigMono>
@@ -42,7 +45,16 @@ public partial class UnitSpawnerBaker : Baker<UnitSpawerConfigMono>
             maxSpeed = authoring.maxSpeed,
             minDistance = authoring.minDistance,
             elapsedTime = 0,
-
+            
+        });
+        AddComponent(entity, new CollisionAvoidanceSettingsComponent
+        {
+            cohesionBias = authoring.avoidance.cohesionBias,
+            separationBias = authoring.avoidance.separationBias,
+            alignmentBias = authoring.avoidance.alignmentBias,
+            targetBias = authoring.avoidance.targetBias,
+            perceptionRadius = authoring.avoidance.perceptionRadius,
+            cellSize = authoring.avoidance.cellSize,
         });
     }
 }

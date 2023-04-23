@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -201,7 +201,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 693502484}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 14.4, y: 0, z: 0}
   m_LocalScale: {x: 10, y: 1, z: 10}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -279,12 +279,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   unitPrefab: {fileID: 7203007988332262238, guid: 575b901ea5308a44fa5fb5c94b77f972, type: 3}
-  xGridCount: 5
+  xGridCount: 200
   zGridCount: 5
   baseOffset: 0.5
-  xPadding: 1.5
-  zPadding: 1.5
-  maxEntitiesToSpawn: 20
+  xPadding: 1
+  zPadding: 1
+  maxEntitiesToSpawn: 100
   interval: 3
   offset:
     x: 0
@@ -294,6 +294,13 @@ MonoBehaviour:
   minSpeed: 0
   maxSpeed: 0
   minDistance: 0.25
+  avoidance:
+    cohesionBias: 0.1
+    separationBias: 12
+    alignmentBias: 0.5
+    targetBias: 2
+    perceptionRadius: 4
+    cellSize: 1
 --- !u!4 &1513396621
 Transform:
   m_ObjectHideFlags: 0

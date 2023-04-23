@@ -10,6 +10,7 @@ using UnityEngine;
 [UpdateAfter(typeof(NavAgentSystem))]
 public partial struct UnitMovementSystem : ISystem
 {
+ 
     
     [BurstCompile]
     public void OnUpdate(ref SystemState state) {
@@ -26,19 +27,33 @@ public partial struct UnitMovementSystem : ISystem
 public partial struct UnitMovementJob: IJobEntity
 {
     public float deltaTime;
-    private void Execute(UnitAgentAspect unitAspect, [ChunkIndexInQuery]int sortKey)
+    private void Execute(UnitAgentAspect unitAspect)
     {
 
         if(unitAspect.NavAgentRouted && unitAspect.buffer.Length > 0)
         {
-            unitAspect.WayPointDirection = 
-                math.normalize((unitAspect.buffer[unitAspect.CurrentBufferIndex].wayPoint) - unitAspect.transform.ValueRO.Position);
 
-            unitAspect.transform.ValueRW.Position += 
+            unitAspect.CorrectedWayPoint = unitAspect.buffer[unitAspect.CurrentBufferIndex].wayPoint;
+
+            /* -------Collision Avoidance----------
+            //unitAspect.TargetAvoidance = unitAspect.CorrectedWayPoint;
+
+            //unitAspect.transform.ValueRW.Position = math.lerp(
+            //        unitAspect.transform.ValueRO.Position,
+            //        (unitAspect.transform.ValueRO.Position + new float3(unitAspect.VelocityAvoidance.x, 0, unitAspect.VelocityAvoidance.z)),
+            //        deltaTime);
+            */
+
+            //------Defolt NavMeshMovement----Comment this for CollisionAvoidanceMovement
+            unitAspect.WayPointDirection =
+                math.normalize((unitAspect.CorrectedWayPoint) - unitAspect.transform.ValueRO.Position);
+
+            unitAspect.transform.ValueRW.Position +=
                 math.normalize(unitAspect.WayPointDirection + unitAspect.Offset) * unitAspect.Speed * deltaTime;
+            //------------------------------
 
-            if(!unitAspect.Reached && 
-                math.distance(unitAspect.transform.ValueRO.Position, unitAspect.buffer[unitAspect.CurrentBufferIndex].wayPoint) <= unitAspect.MinDistane 
+            if (!unitAspect.Reached && 
+                math.distance(unitAspect.transform.ValueRO.Position, unitAspect.CorrectedWayPoint) <= unitAspect.MinDistane 
                 && unitAspect.CurrentBufferIndex < unitAspect.buffer.Length - 1)
             {
                 unitAspect.CurrentBufferIndex++;
@@ -46,10 +61,10 @@ public partial struct UnitMovementJob: IJobEntity
                     unitAspect.Reached = true;
             }
             else if(unitAspect.Reached &&
-                math.distance(unitAspect.transform.ValueRO.Position, unitAspect.buffer[unitAspect.CurrentBufferIndex].wayPoint) <= unitAspect.MinDistane 
+                math.distance(unitAspect.transform.ValueRO.Position, unitAspect.CorrectedWayPoint) <= unitAspect.MinDistane 
                 && unitAspect.CurrentBufferIndex > 0)
             {
-                unitAspect.CurrentBufferIndex--;
+                unitAspect.CurrentBufferIndex = unitAspect.CurrentBufferIndex - 1;
                 if(unitAspect.CurrentBufferIndex == 0) 
                     unitAspect.Reached = false;
             }

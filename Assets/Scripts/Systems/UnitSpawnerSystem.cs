@@ -1,10 +1,8 @@
 
 using Unity.Burst;
-using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
-using UnityEngine;
 
 [BurstCompile]
 [UpdateInGroup(typeof(InitializationSystemGroup))]
@@ -52,8 +50,11 @@ public partial struct SpawnUnitJob: IJobEntity
                         spawnerAspect.EntityUnit : 
                         ecb.Instantiate(spawnerAspect.EntityUnit);
 
+                    spawnerAspect.CountSpawn++;
+
                     float3 pos = new float3(i * spawnerAspect.PaddingXZ.x, spawnerAspect.BaseOffset, j * spawnerAspect.PaddingXZ.y) + float3.zero;
                     ecb.SetComponent(e, new LocalTransform { Position = pos, Scale = 1f });
+
                     ecb.AddComponent(e, new NavAgentComponent
                     {
                         entity = e,
@@ -61,7 +62,6 @@ public partial struct SpawnUnitJob: IJobEntity
                         toLocation = new float3(pos.x, pos.y, pos.z + spawnerAspect.DestinationDistanceZAxis),
                         routed = false
                     });
-                    ecb.AddBuffer<NavBuffer>(e);
                     ecb.AddComponent(e, new UnitAgentComponent
                     {
                         entity = e,
@@ -70,8 +70,21 @@ public partial struct SpawnUnitJob: IJobEntity
                         minDistance = spawnerAspect.MinDistance,
                         offset = spawnerAspect.Offset
                     });
+                    ecb.AddComponent(e, new CollisionAvoidanceComponent
+                    {
+                        perceptionRadius = spawnerAspect.PerceptionRadius,
+                        separationBias = spawnerAspect.SeparationBias,
+                        alignmentBias= spawnerAspect.AlignmentBias,
+                        cohesionBias= spawnerAspect.CohesionBias,
+                        targetBias= spawnerAspect.TargetBias,
+                        cellSize = spawnerAspect.cellSize,
+                        wayPointZOffset = 1.5f,
+                        speed = 5
+                    });
                     ecb.AddComponent<NavAgent_ToBeRoutedTag>(e);
                     ecb.SetComponentEnabled<NavAgent_ToBeRoutedTag>(e, true);
+
+                    ecb.AddBuffer<NavBuffer>(e);
                     totalSpawned++;
                 }
             }

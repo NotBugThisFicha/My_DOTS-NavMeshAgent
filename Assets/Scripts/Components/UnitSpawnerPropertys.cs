@@ -22,4 +22,6 @@ public partial struct UnitSpawnerPropertys: IComponentData
 
     public float elapsedTime;
     public float totalSpawned;
+
+    public int countSpawn;
 }

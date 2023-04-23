@@ -8,6 +8,7 @@ public struct UnitAgentComponent: IComponentData
     public float speed;
     public int currentBufferIndex;
     public float3 waypointDirection;
+    public float3 correctedWaypoint;
     public float3 offset;
     public float minDistance;
     public bool reached;
